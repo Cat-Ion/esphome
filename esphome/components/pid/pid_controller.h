@@ -32,8 +32,8 @@ struct PIDController {
     // d(t) := K_d * de(t)/dt
     float derivative = 0.0f;
     if (dt != 0.0f)
-      derivative = (error - previous_error_) / dt;
-    previous_error_ = error;
+      derivative = (process_value - previous_value_) / dt;
+    previous_value_ = process_value;
     derivative_term = kd * derivative;
 
     // u(t) := p(t) + i(t) + d(t)
@@ -71,7 +71,7 @@ struct PIDController {
   }
 
   /// Error from previous update used for derivative term
-  float previous_error_ = 0;
+  float previous_value_ = 0;
   /// Accumulated integral value
   float accumulated_integral_ = 0;
   uint32_t last_time_ = 0;
