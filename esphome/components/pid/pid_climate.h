@@ -21,7 +21,12 @@ class PIDClimate : public climate::Climate, public Component {
   void set_sensor(sensor::Sensor *sensor) { sensor_ = sensor; }
   void set_cool_output(output::FloatOutput *cool_output) { cool_output_ = cool_output; }
   void set_heat_output(output::FloatOutput *heat_output) { heat_output_ = heat_output; }
-  void set_kp(float kp) { controller_.kp = kp; }
+  void set_kp(float kp) {
+    // Adjust the integral to prevent output jumps, but only if ki is non-zero
+    if (controller_.ki != 0)
+      controller_.accumulated_integral_ -= (kp - controller_.kp) * controller_.previous_value_;
+    controller_.kp = kp;
+  }
   void set_ki(float ki) { controller_.ki = ki; }
   void set_kd(float kd) { controller_.kd = kd; }
   void set_min_integral(float min_integral) { controller_.min_integral = min_integral; }
