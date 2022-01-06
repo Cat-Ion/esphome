@@ -23,25 +23,39 @@ struct PIDController {
 
     // i(t) := K_i * \int_{0}^{t} e(t) dt
     accumulated_integral_ += error * dt * ki;
-    // constrain accumulated integral value
-    if (!std::isnan(min_integral) && accumulated_integral_ < min_integral)
-      accumulated_integral_ = min_integral;
-    if (!std::isnan(max_integral) && accumulated_integral_ > max_integral)
-      accumulated_integral_ = max_integral;
     integral_term = accumulated_integral_;
 
     // d(t) := K_d * de(t)/dt
     float derivative = 0.0f;
     if (dt != 0.0f)
       derivative = (process_value - previous_value_) / dt;
-    previous_value_ = process_value;
     derivative_term = kd * derivative;
 
-    // u(t) := p(t) + i(t) + d(t)
-    return proportional_term + integral_term + derivative_term;
+    // constrain output: u(t) := p(t) + i(t) + d(t)
+    float output = proportional_term + integral_term + derivative_term;
+    if (!std::isnan(min_output) && output < min_output) {
+      accumulated_integral_ -= min_output - output;
+      output = min_output;
+    } else if (!std::isnan(max_output) && output > max_output) {
+      accumulated_integral_ -= max_output - output;
+      output = max_output;
+    }
+
+    previous_value_ = process_value;
+    previous_error_ = error;
+
+    return output;
   }
 
   void reset_accumulated_integral() { accumulated_integral_ = 0; }
+
+  void set_kp(float v) {
+    const float diff_out = (v - kp) * previous_error_;
+    this->accumulated_integral_ -= diff_out;
+    this->kp = v;
+  }
+  void set_ki(float v) { this->ki = v; }
+  void set_kd(float v) { this->kd = v; }
 
   /// Proportional gain K_p.
   float kp = 0;
@@ -50,8 +64,8 @@ struct PIDController {
   /// Differential gain K_d.
   float kd = 0;
 
-  float min_integral = NAN;
-  float max_integral = NAN;
+  float min_output = NAN;
+  float max_output = NAN;
 
   // Store computed values in struct so that values can be monitored through sensors
   float error;
@@ -71,7 +85,8 @@ struct PIDController {
     return dt / 1000.0f;
   }
 
-  /// Error from previous update used for derivative term
+  /// Error and value from previous update used for derivative term
+  float previous_error_ = 0;
   float previous_value_ = 0;
   /// Accumulated integral value
   float accumulated_integral_ = 0;
