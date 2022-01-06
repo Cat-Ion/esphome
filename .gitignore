@@ -127,3 +127,5 @@ tests/.esphome/
 
 sdkconfig.*
 !sdkconfig.defaults
+
+!tests/cxx/CMakeLists.txt
