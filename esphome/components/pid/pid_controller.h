@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include "esphome/core/hal.h"
 
 namespace esphome {
