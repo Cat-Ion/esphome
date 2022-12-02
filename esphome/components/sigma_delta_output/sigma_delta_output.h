@@ -18,6 +18,16 @@ class SigmaDeltaOutput : public PollingComponent, public output::FloatOutput {
     if (!this->turn_off_trigger_)
       this->turn_off_trigger_ = make_unique<Trigger<>>();
     return this->turn_off_trigger_.get();
+  void set_output(output::BinaryOutput *output) { this->output_ = output; }
+  void write_state(float state) override { this->state_ = state; }
+  void update() override {
+    this->accum_ += this->state_;
+    if (this->output_) {
+      this->output_->set_state(this->accum_ > 0);
+    }
+    if (this->accum_ > 0) {
+      this->accum_ -= 1.;
+    }
   }
 
   Trigger<bool> *get_state_change_trigger() {
@@ -39,6 +49,7 @@ class SigmaDeltaOutput : public PollingComponent, public output::FloatOutput {
   std::unique_ptr<Trigger<>> turn_off_trigger_{nullptr};
   std::unique_ptr<Trigger<bool>> state_change_trigger_{nullptr};
 
+  output::BinaryOutput *output_{nullptr};
   float accum_{0};
   float state_{0.};
   bool value_{false};

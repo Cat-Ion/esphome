@@ -7,6 +7,7 @@ from esphome.const import (
     CONF_PIN,
     CONF_TURN_ON_ACTION,
     CONF_TURN_OFF_ACTION,
+    CONF_OUTPUT,
 )
 
 DEPENDENCIES = []
@@ -37,6 +38,7 @@ CONFIG_SCHEMA = cv.All(
                 "on_off",
                 f"{CONF_TURN_ON_ACTION} and {CONF_TURN_OFF_ACTION} must both be defined",
             ): automation.validate_automation(single=True),
+            cv.Required(CONF_OUTPUT): cv.use_id(output.BinaryOutput),
         }
     ),
 )
@@ -64,3 +66,5 @@ async def to_code(config):
         await automation.build_automation(
             var.get_turn_off_trigger(), [], config[CONF_TURN_OFF_ACTION]
         )
+    output_component = await cg.get_variable(config[CONF_OUTPUT])
+    cg.add(var.set_output(output_component))
